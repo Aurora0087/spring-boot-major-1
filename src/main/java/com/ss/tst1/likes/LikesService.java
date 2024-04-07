@@ -1,14 +1,9 @@
 package com.ss.tst1.likes;
 
-import com.ss.tst1.comment.Comment;
-import com.ss.tst1.comment.CommentService;
 import com.ss.tst1.user.User;
 import com.ss.tst1.user.UserService;
-import com.ss.tst1.videoContent.VideoContent;
-import com.ss.tst1.videoContent.VideoContentService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

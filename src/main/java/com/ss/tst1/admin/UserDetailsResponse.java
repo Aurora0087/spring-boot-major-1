@@ -1,6 +1,5 @@
 package com.ss.tst1.admin;
 
-import com.ss.tst1.user.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
