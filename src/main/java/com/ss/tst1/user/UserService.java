@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -65,5 +66,20 @@ public class UserService implements UserDetailsService {
     }
     public Boolean isUserExistWithUserName(String userName){
         return userRepository.findByUserName(userName).isPresent();
+    }
+
+    public List<User> getAllUser() {
+        return userRepository.findAll();
+    }
+
+    public Boolean updateUsersPermissions(Integer uid,Boolean locked,Boolean enable,Role userRole){
+        Optional<User> user = userRepository.findById(uid);
+
+        if (user.isEmpty()){
+            return false;
+        }
+        userRepository.updateUserByAdmin(uid,locked,enable,userRole);
+
+        return true;
     }
 }

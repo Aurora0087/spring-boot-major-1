@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
+
 @Service
 @AllArgsConstructor
 public class LikesService {
@@ -21,42 +24,35 @@ public class LikesService {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private VideoContentService videoContentService;
-
-    @Autowired
-    private CommentService commentService;
-
-    public ResponseEntity<String> doLike(Integer userId,Integer contentId,ContentType contentType){
+    public List<Integer> toggleLike(Integer userId,Integer contentId,ContentType contentType){
         try{
             User user = userService.getUserById(userId)
                     .orElseThrow(()-> new IllegalArgumentException("User do not exist."));
 
-            if (contentType==ContentType.Video){
-                VideoContent videoContent = videoContentService.getVideoContent(contentId)
-                        .orElseThrow(()-> new IllegalArgumentException("Video Content do not exist."));
+            Optional<Likes> like = likesRepo.getLikeByUidCidType(user.getId(),contentId,contentType);
 
-                Likes newLike = new Likes(user,ContentType.Video,contentId);
-                
-                likesRepo.save(newLike);
-                
-                return ResponseEntity.ok("Successes.");
-            } else if (contentType==ContentType.Comment) {
-                Comment comment = commentService.getComment(contentId)
-                        .orElseThrow(()-> new IllegalArgumentException("Comment do not exist."));
+            if (like.isPresent()){
 
-                Likes newLike = new Likes(user,ContentType.Comment,contentId);
+                likesRepo.deleteById(like.get().getId());
 
-                likesRepo.save(newLike);
-
-                return ResponseEntity.ok("Successes.");
             }
             else {
-                return ResponseEntity.ok("You cant like this.");
+                Likes newLike = new Likes(user,contentType,contentId);
+
+                likesRepo.save(newLike);
             }
 
+            return getLikedUsersIds(contentId,contentType);
 
         } catch (IllegalArgumentException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<Integer> getLikedUsersIds(Integer cId,ContentType contentType){
+        try{
+            return likesRepo.getLikesOnContent(cId,contentType);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

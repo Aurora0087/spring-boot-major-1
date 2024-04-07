@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     @Autowired
-    private final AuthService authService;
+    private AuthService authService;
 
     @PostMapping(path = "/login")
     public ResponseEntity<AuthenticationResponse> authenticateUser(

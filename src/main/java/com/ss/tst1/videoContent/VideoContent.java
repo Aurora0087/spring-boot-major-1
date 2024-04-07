@@ -20,7 +20,7 @@ public class VideoContent {
     @SequenceGenerator(
             name = "video_content_squ",
             sequenceName = "video_content_squ",
-            initialValue = 100,
+            initialValue = 1000,
             allocationSize = 1
     )
     @GeneratedValue(
@@ -38,7 +38,9 @@ public class VideoContent {
     @JoinColumn(name = "categoryId")
     private Category category;
 
+    @Column(columnDefinition = "TEXT")
     private String title;
+    @Column(columnDefinition = "TEXT")
     private String description;
     private Float price;
     private String imgUrl;

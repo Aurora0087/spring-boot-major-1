@@ -1,5 +1,7 @@
 package com.ss.tst1.post;
 
+import com.ss.tst1.likes.LikeResponse;
+import com.ss.tst1.videoContent.CreateVideoContentResponse;
 import com.ss.tst1.videoContent.VideoContentResponseToUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +17,7 @@ public class PostController {
     private PostService postService;
 
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(
+    public ResponseEntity<CreateVideoContentResponse> uploadFile(
             @RequestParam("thumbnail")MultipartFile thumbnail,
             @RequestParam("video")MultipartFile video,
             @RequestParam("title")String title,
@@ -38,5 +40,13 @@ public class PostController {
             @RequestBody GetVideoContentRequest request
     ){
         return postService.getAllVideoContentNotBaned(request.getIgnore(), request.getLimit());
+    }
+
+    @PostMapping("/likevideo")
+    public ResponseEntity<LikeResponse> toggleVideoContentLikes(
+            @CookieValue(name = "uuid")String uid,
+            @RequestParam String vid
+    ){
+        return postService.toggleVideoLikes(uid,vid);
     }
 }

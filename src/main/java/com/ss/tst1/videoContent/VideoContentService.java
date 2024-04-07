@@ -1,6 +1,7 @@
 package com.ss.tst1.videoContent;
 
 import com.ss.tst1.aws.AmazonS3Service;
+import com.ss.tst1.likes.ContentType;
 import com.ss.tst1.likes.LikesService;
 import com.ss.tst1.user.User;
 import com.ss.tst1.user.UserService;
@@ -33,8 +34,11 @@ public class VideoContentService {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private LikesService likesService;
 
-    public ResponseEntity<String> createVideoContent(
+
+    public ResponseEntity<CreateVideoContentResponse> createVideoContent(
             Integer authorId,
             Integer categoryID,
             String title,
@@ -53,7 +57,7 @@ public class VideoContentService {
             VideoContent content = new VideoContent(user,category,title,description,price,imgUrl,videoUrl);
             VideoContent newContent = videoContentRepo.save(content);
 
-            return ResponseEntity.ok("Content id "+newContent.getId()+" uploaded properly.");
+            return ResponseEntity.ok(new CreateVideoContentResponse("Done",newContent.getId()));
         }
         catch (Error e){
             throw new RuntimeException(e);
@@ -82,6 +86,7 @@ public class VideoContentService {
 
             response.setId(content.getId());
             response.setCategory(content.getCategory().getCategoryName());
+            response.setTitle(content.getTitle());
             response.setPrice(content.getPrice());
             response.setDescription(content.getDescription());
             response.setCreatedAt(content.getCreatedAt());
@@ -90,11 +95,28 @@ public class VideoContentService {
 
             response.setImgUrl(imageUrl);
 
+            List<Integer> likedUser = likesService.getLikedUsersIds(content.getId(), ContentType.Video);
+
+            response.setLikeList(likedUser);
+
             responseContents.addLast(response);
         }
 
         Boolean isMoreExist = ignore+limit < unBanedContents.size();
 
         return new VideoContentResponseToUser("Done",responseContents,isMoreExist);
+    }
+
+    public List<Integer> likeVideoContent(Integer uId,Integer vId){
+        return likesService.toggleLike(uId,vId,ContentType.Video);
+    }
+
+    public List<Integer> getLikedUserIdByContentId(Integer cId){
+        Optional<VideoContent> content = getVideoContent(cId);
+
+        if (content.isEmpty()){
+            return new ArrayList<>();
+        }
+        return likesService.getLikedUsersIds(cId,ContentType.Video);
     }
 }
