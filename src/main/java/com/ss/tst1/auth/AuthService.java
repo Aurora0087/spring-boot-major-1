@@ -25,31 +25,37 @@ import java.util.concurrent.TimeUnit;
 @AllArgsConstructor
 public class AuthService {
 
-    private final AuthenticationManager authenticationManager;
+    private AuthenticationManager authenticationManager;
 
     @Autowired
-    private final JwtService jwtService;
+    private JwtService jwtService;
 
     @Autowired
-    private final UserService userService;
+    private UserService userService;
 
     @Autowired
-    private  final AmazonS3Service s3Service;
+    private AmazonS3Service s3Service;
 
-    public ResponseEntity<AuthenticationResponse> signIn(
-            LoginRequest request
-    ){
+    public ResponseEntity<AuthenticationResponse> signIn( LoginRequest request ){
+
+        String email = request.getEmail();
+        String password = request.getPassword();
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
+                       email,
+                        password
                 )
         );
         if (authentication.isAuthenticated()){
 
-            String generatedToken = jwtService.generateToken(request.getEmail());
+            String generatedToken = jwtService.generateToken(email);
 
-            Optional<User> user = userService.getUserByEmailId(request.getEmail());
+            Optional<User> user = userService.getUserByEmailId(email);
+
+            if (user.isEmpty()){
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthenticationResponse("Failed, no user found with this credential.",""));
+            }
 
             ResponseCookie token = ResponseCookie.from("token",generatedToken)
                     .httpOnly(true)

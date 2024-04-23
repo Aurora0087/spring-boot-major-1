@@ -10,7 +10,6 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
 public class ChangeUserPermissionRequest {
     private List<ChangeUserPermission> userPermissions;
 }

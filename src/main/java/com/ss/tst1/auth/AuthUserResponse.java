@@ -10,7 +10,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
 public class AuthUserResponse {
     @JsonProperty("avatar")
     private String avatar;

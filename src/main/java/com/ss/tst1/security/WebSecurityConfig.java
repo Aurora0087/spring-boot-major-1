@@ -2,6 +2,7 @@ package com.ss.tst1.security;
 
 
 import com.ss.tst1.filter.JwtAuthFillter;
+import com.ss.tst1.user.Role;
 import com.ss.tst1.user.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,20 +18,25 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.Date;
+
 @Configuration
 @AllArgsConstructor
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Autowired
-    private final UserService userService;
+    private UserService userService;
     @Autowired
-    private final JwtAuthFillter jwtAuthFillter;
+    private JwtAuthFillter jwtAuthFillter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+
+        System.out.println(new Date());
          http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
@@ -40,12 +46,13 @@ public class WebSecurityConfig {
                                 "/error*/**",
                                 "/login/**",
                                 "/logout/**",
-                                "/register*/**"
+                                "/register*/**",
+                                "/get/videocontent*/**"
                         )
                         .permitAll()
                         .requestMatchers("/lol*/**")
                         .hasAuthority("USER")
-                        .requestMatchers("/admin/**")
+                        .requestMatchers("/admin*/**")
                         .hasAuthority("ADMIN")
                         .anyRequest()
                         .authenticated()

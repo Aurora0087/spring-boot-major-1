@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Objects;
 
 @Component
@@ -34,6 +35,7 @@ public class JwtAuthFillter extends OncePerRequestFilter {
         Cookie[] cookies = request.getCookies();
 
         if (!Objects.equals(request.getServletPath(), "/register") && !Objects.equals(request.getServletPath(), "/login")){
+
             if (cookies!=null){
                 for (Cookie cookie:cookies){
                     if (Objects.equals(cookie.getName(), "token")){

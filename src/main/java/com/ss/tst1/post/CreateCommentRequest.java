@@ -8,7 +8,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class GetVideoContentRequest {
-    private String ignore;
-    private String limit;
+@NoArgsConstructor
+public class CreateCommentRequest {
+    private String parentId;
+    private String text;
+    private String parentType;
 }

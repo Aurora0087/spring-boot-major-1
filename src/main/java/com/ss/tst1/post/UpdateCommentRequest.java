@@ -1,5 +1,4 @@
-package com.ss.tst1.auth;
-
+package com.ss.tst1.post;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +8,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class LoginRequest {
-    private String email;
-    private String password;
+@NoArgsConstructor
+public class UpdateCommentRequest {
+    private String commentId;
+    private String newText;
 }

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RegistrationController {
 
     @Autowired
-    private final RegistrationService registrationService;
+    private RegistrationService registrationService;
 
     @PostMapping(path = "/register")
     public ResponseEntity<RegisterResponse> register(@RequestBody RegistrationRequest request){
