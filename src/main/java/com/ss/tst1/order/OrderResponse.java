@@ -1,6 +1,5 @@
-package com.ss.tst1.auth;
+package com.ss.tst1.order;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +9,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthenticationResponse {
-	@JsonProperty("message")
+public class OrderResponse {
     private String message;
+    private OrderStatus status;
 }

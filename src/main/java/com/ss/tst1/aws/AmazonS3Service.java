@@ -38,6 +38,10 @@ public class AmazonS3Service {
         return objectKey;
     }
 
+    public void deleteFile(String objectKey){
+        s3Client.deleteObject(bucketName,objectKey);
+    }
+
     public URL generatePreSignedUrl(String key, Date expiration){
         GeneratePresignedUrlRequest generatePresignedUrlRequest = new GeneratePresignedUrlRequest(bucketName,key)
                 .withMethod(HttpMethod.GET)

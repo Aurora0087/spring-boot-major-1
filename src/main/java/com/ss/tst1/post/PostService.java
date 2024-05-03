@@ -10,10 +10,7 @@ import com.ss.tst1.profile.PostProfileResponse;
 import com.ss.tst1.user.Role;
 import com.ss.tst1.user.User;
 import com.ss.tst1.user.UserService;
-import com.ss.tst1.videoContent.CreateVideoContentResponse;
-import com.ss.tst1.videoContent.VideoContent;
-import com.ss.tst1.videoContent.VideoContentResponseToUser;
-import com.ss.tst1.videoContent.VideoContentService;
+import com.ss.tst1.videoContent.*;
 import com.ss.tst1.videoContentCategory.CategoryService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -95,6 +93,38 @@ public class PostService {
         }
     }
 
+    public ResponseEntity<CreateVideoContentResponse> updateVideoContent(
+            String contentId,
+            String userid,
+            String title,
+            String description,
+            String price
+    ){
+        if (!userid.matches(".*\\d.*") || !contentId.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new CreateVideoContentResponse("Properties not given properly.",null));
+        }
+
+        Float contentPrice = 0F;
+
+        if (price.matches(".*\\d.*")){
+            contentPrice = Float.valueOf(price);
+        }
+
+        return videoContentService.editVideoContent(Integer.valueOf(contentId),Integer.valueOf(userid),title,description,contentPrice);
+
+    }
+
+    public ResponseEntity<Boolean> deleteVideoContent(
+            String contentId,
+            String userid
+    ){
+        if (!userid.matches(".*\\d.*") || !contentId.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
+        }
+
+        return videoContentService.deleteVideoContent(Integer.valueOf(contentId),Integer.valueOf(userid));
+    }
+
     public ResponseEntity<VideoContentResponseToUser> getAllVideoContentNotBaned(String ignore, String limit) {
 
         if (ignore.isEmpty() || !ignore.matches(".*\\d.*")){
@@ -106,6 +136,10 @@ public class PostService {
         }
 
         return ResponseEntity.ok(videoContentService.getUnBanedContents(Integer.valueOf(ignore),Integer.valueOf(limit)));
+    }
+
+    public ResponseEntity<GetVideoContentDetailsByIdResponse> getVideoById(String vId){
+        return videoContentService.getVideoByIdForUser(vId);
     }
 
 
@@ -197,6 +231,53 @@ public class PostService {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You do not have authority to edit this.");
     }
 
+    public ResponseEntity<Boolean> makePrivateComments(List<String> commentIdList,String uid){
+
+        if (!uid.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
+        }
+
+        User user = userService.getUserById(Integer.valueOf(uid)).orElseThrow(()-> new UsernameNotFoundException("User do not exist, try to log in again."));
+
+        for (String commentId:commentIdList){
+            if (commentId.matches(".*\\d.*")){
+                Optional<Comment> comment = commentService.getComment(Integer.valueOf(commentId));
+                if (comment.isEmpty()){
+                    continue;
+                }
+
+                if (Objects.equals(comment.get().getAuthor().getId(), user.getId()) || user.getRole().toString().equalsIgnoreCase(Role.ADMIN.toString())){
+                    commentService.makeCommentPrivate(Integer.valueOf(commentId));
+                }
+            }
+        }
+        return ResponseEntity.ok(true);
+    }
+
+    public ResponseEntity<Boolean> makePublicComments(List<String> commentIdList,String uid){
+
+        if (!uid.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
+        }
+
+        User user = userService.getUserById(Integer.valueOf(uid)).orElseThrow(()-> new UsernameNotFoundException("User do not exist, try to log in again."));
+
+        for (String commentId:commentIdList){
+            if (commentId.matches(".*\\d.*")){
+                Optional<Comment> comment = commentService.getComment(Integer.valueOf(commentId));
+                if (comment.isEmpty()){
+                    continue;
+                }
+
+                if (Objects.equals(comment.get().getAuthor().getId(), user.getId()) || user.getRole().toString().equalsIgnoreCase(Role.ADMIN.toString())){
+                    commentService.makeCommentPublic(Integer.valueOf(commentId));
+                }
+
+            }
+        }
+        return ResponseEntity.ok(true);
+    }
+
     public ResponseEntity<CommentResponse> getCommendById(String commentId){
 
         if (!commentId.matches(".*\\d.*")){
@@ -274,5 +355,25 @@ public class PostService {
         }
 
         else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GetCommentsResponse("Proper parent type not given."));
+    }
+
+    public ResponseEntity<LikeResponse> likeComment(String commentId,String uid){
+        if (!commentId.matches(".*\\d.*") || !uid.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LikeResponse("Wrong parameters."));
+        }
+
+        Optional<Comment> comment = commentService.getComment(Integer.valueOf(commentId));
+        User user = userService.getUserById(Integer.valueOf(uid)).orElseThrow(()->new UsernameNotFoundException("User do not exist,please login again."));
+
+        if (comment.isEmpty() || comment.get().getIsPrivate()){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new LikeResponse("Comment do not exist or its a private comment."));
+        }
+
+        LikeResponse response = new LikeResponse(
+                "Done",
+                commentService.likeComment(comment.get().getId(),user.getId())
+        );
+
+        return  ResponseEntity.ok(response);
     }
 }

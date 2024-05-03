@@ -54,7 +54,7 @@ public class AuthService {
             Optional<User> user = userService.getUserByEmailId(email);
 
             if (user.isEmpty()){
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthenticationResponse("Failed, no user found with this credential.",""));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthenticationResponse("Failed, no user found with this credential."));
             }
 
             ResponseCookie token = ResponseCookie.from("token",generatedToken)
@@ -79,7 +79,7 @@ public class AuthService {
                     .ok()
                     .headers(headers)
                     .body
-                            (new AuthenticationResponse("success",generatedToken));
+                            (new AuthenticationResponse("success"));
         }
         else {
             throw new UsernameNotFoundException("User not found.");

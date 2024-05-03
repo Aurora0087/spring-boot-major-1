@@ -83,6 +83,12 @@
 			<artifactId>jakarta.xml.bind-api</artifactId>
 			<version>4.0.2</version>
 		</dependency>
+
+		<dependency>
+			<groupId>com.razorpay</groupId>
+			<artifactId>razorpay-java</artifactId>
+			<version>1.4.6</version>
+		</dependency>
 	</dependencies>
 
 	<build>

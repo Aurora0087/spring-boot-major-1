@@ -1,5 +1,7 @@
 package com.ss.tst1.comment;
 
+import com.ss.tst1.likes.ContentType;
+import com.ss.tst1.likes.LikesService;
 import com.ss.tst1.profile.PostProfileResponse;
 import com.ss.tst1.user.User;
 import lombok.AllArgsConstructor;
@@ -16,6 +18,9 @@ public class CommentService {
 
     @Autowired
     private CommentRepo commentRepo;
+
+    @Autowired
+    private LikesService likesService;
 
 
     public Optional<Comment> getComment(Integer commentId) {
@@ -68,13 +73,13 @@ public class CommentService {
         return updatedComment.getId();
     }
 
-    private Integer makeCommentPrivate(Integer commentId){
+    public Integer makeCommentPrivate(Integer commentId){
         Comment comment = commentRepo.privateComment(commentId,true);
 
         return comment.getId();
     }
 
-    private Integer makeCommentPublic(Integer commentId){
+    public Integer makeCommentPublic(Integer commentId){
         Comment comment = commentRepo.privateComment(commentId,false);
 
         return comment.getId();
@@ -89,5 +94,9 @@ public class CommentService {
         }
 
         commentRepo.deleteById(commentId);
+    }
+
+    public List<Integer> likeComment(Integer commentId,Integer uid){
+        return likesService.toggleLike(uid,commentId, ContentType.Comment);
     }
 }
