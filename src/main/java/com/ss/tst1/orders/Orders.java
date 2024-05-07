@@ -1,4 +1,4 @@
-package com.ss.tst1.order;
+package com.ss.tst1.orders;
 
 import com.ss.tst1.user.User;
 import com.ss.tst1.videoContent.VideoContent;
@@ -13,7 +13,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Order {
+public class Orders {
 
     @SequenceGenerator(
             name = "bought_content_squ",
@@ -40,7 +40,7 @@ public class Order {
     private String razorpayPaymentId;
     private Boolean isPayed;
 
-    public Order(User boughtBy, VideoContent content, String razorpayOrderId) {
+    public Orders(User boughtBy, VideoContent content, String razorpayOrderId) {
         this.boughtBy = boughtBy;
         this.content = content;
         this.razorpayOrderId = razorpayOrderId;

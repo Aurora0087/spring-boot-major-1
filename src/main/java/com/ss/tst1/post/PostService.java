@@ -6,11 +6,16 @@ import com.ss.tst1.comment.CommentParentType;
 import com.ss.tst1.comment.CommentResponse;
 import com.ss.tst1.comment.CommentService;
 import com.ss.tst1.likes.LikeResponse;
+import com.ss.tst1.orders.OrderResponse;
+import com.ss.tst1.orders.OrderStatus;
+import com.ss.tst1.orders.Orders;
+import com.ss.tst1.orders.OrdersService;
 import com.ss.tst1.profile.PostProfileResponse;
 import com.ss.tst1.user.Role;
 import com.ss.tst1.user.User;
 import com.ss.tst1.user.UserService;
 import com.ss.tst1.videoContent.*;
+import com.ss.tst1.videoContentCategory.Category;
 import com.ss.tst1.videoContentCategory.CategoryService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
@@ -45,10 +47,17 @@ public class PostService {
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private OrdersService ordersService;
+
 
     //------------------------------------category
     public ResponseEntity<String> createNewCategory(String name){
         return categoryService.createCategory(name);
+    }
+
+    public ResponseEntity<List<Category>> getAllCategory(){
+        return ResponseEntity.ok(categoryService.getAllCategory());
     }
 
     //------------------------------------ video
@@ -142,6 +151,42 @@ public class PostService {
         return videoContentService.getVideoByIdForUser(vId);
     }
 
+
+    //---------------------------------------------------Watch
+    public ResponseEntity<WatchResponse> watchVideo(String contentId,String uid){
+
+        if (!uid.matches(".*\\d.*") || !contentId.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new WatchResponse("Give proper properties."));
+        }
+
+        Optional<User> user =userService.getUserById(Integer.valueOf(uid));
+        Optional<VideoContent> content = videoContentService.getVideoContent(Integer.valueOf(contentId));
+
+        if (user.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new WatchResponse("user do not exist, please login again."));
+        }
+        if (content.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new WatchResponse("Content do not exist."));
+        }
+
+        if (Objects.equals(content.get().getAuthor().getId(), user.get().getId()) || user.get().getRole().toString().equalsIgnoreCase(Role.ADMIN.toString())){
+
+            String videoUrl = s3Service.generatePreSignedUrl(content.get().getVideoUrl(),new Date(System.currentTimeMillis()+1000*60*60*6)).toString();
+
+            return ResponseEntity.ok(new WatchResponse("Done",videoUrl));
+        }
+        if (content.get().getIsBlocked()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new WatchResponse("This content is blocked."));
+        }
+        if (content.get().getPrice()<=0 || ordersService.isBought(Integer.valueOf(uid),Integer.valueOf(contentId))){
+            String videoUrl = s3Service.generatePreSignedUrl(content.get().getVideoUrl(),new Date(System.currentTimeMillis()+1000*60*60*6)).toString();
+
+            return ResponseEntity.ok(new WatchResponse("Done",videoUrl));
+        }
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new WatchResponse("You have to buy this content to watch this."));
+
+    }
 
     //---------------------------------------------------like
     public ResponseEntity<LikeResponse> toggleVideoLikes(String uId,String vId){
@@ -375,5 +420,33 @@ public class PostService {
         );
 
         return  ResponseEntity.ok(response);
+    }
+
+
+    //------------------------------------- search
+    public ResponseEntity<VideoContentResponseToUser> getAllVideoContentWithSameCategory(String ignore, String limit,String category) {
+
+        if (ignore.isEmpty() || !ignore.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new VideoContentResponseToUser("Ignore Dose not hold any number.",new ArrayList<>(),false));
+        }
+
+        if (limit.isEmpty() || !limit.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new VideoContentResponseToUser("Limit Dose not hold any number.",new ArrayList<>(),false));
+        }
+
+        return ResponseEntity.ok(videoContentService.getUnBanedContentsWithSameCategory(Integer.valueOf(ignore),Integer.valueOf(limit),category));
+    }
+
+    public ResponseEntity<VideoContentResponseToUser> searchAllVideoContentWithTopic(String ignore, String limit,String topic) {
+
+        if (ignore.isEmpty() || !ignore.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new VideoContentResponseToUser("Ignore Dose not hold any number.",new ArrayList<>(),false));
+        }
+
+        if (limit.isEmpty() || !limit.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new VideoContentResponseToUser("Limit Dose not hold any number.",new ArrayList<>(),false));
+        }
+
+        return ResponseEntity.ok(videoContentService.searchAndGetUnBanedContentsWithTopic(Integer.valueOf(ignore),Integer.valueOf(limit),topic.trim()));
     }
 }

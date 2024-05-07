@@ -16,7 +16,7 @@ public class RazorPayment {
     @Value("${razorpay.key.secret}")
     private String keySecret;
 
-    public Order makeOrder(Integer amount,String note) throws RazorpayException {
+    public Order makeOrder(Float amount,String note) throws RazorpayException {
 
         RazorpayClient razorpay = new RazorpayClient(keyId, keySecret);
 

@@ -43,7 +43,7 @@ public class PostController {
         return postService.updateVideoContent(vcid,uid,title,description,price);
     }
 
-    @PostMapping("/delete/video/{vcid}")
+    @DeleteMapping("/delete/video/{vcid}")
     public ResponseEntity<Boolean> deleteVideoContent(
             @PathVariable String vcid,
             @CookieValue(name = "uuid")String uid
@@ -51,12 +51,17 @@ public class PostController {
         return postService.deleteVideoContent(vcid,uid);
     }
 
+    @GetMapping("/get/categorys")
+    public ResponseEntity<?> getAllCategory(){
+        return postService.getAllCategory();
+    }
+
     @PostMapping("/add/category")
     public ResponseEntity<String> addNewCategory(@RequestParam("category")String category){
         return postService.createNewCategory(category);
     }
 
-    @GetMapping("/get/videocontents")
+    @PostMapping("/get/videocontents")
     public ResponseEntity<VideoContentResponseToUser> getVideoContentsForUsers(
             @RequestBody GetVideoContentRequest request
     ){
@@ -68,6 +73,30 @@ public class PostController {
             @PathVariable String vcid
     ){
         return postService.getVideoById(vcid);
+    }
+
+    @PostMapping("/watch/{vcid}")
+    public ResponseEntity<WatchResponse> watchVideoContent(
+            @PathVariable String vcid,
+            @CookieValue(name = "uuid")String uid
+    ){
+        return postService.watchVideo(vcid,uid);
+    }
+
+    @PostMapping("/search/byCategory/{category}")
+    public ResponseEntity<VideoContentResponseToUser> getVideoContentsForUsers(
+            @RequestBody GetVideoContentRequest request,
+             @PathVariable String category
+    ){
+        return postService.getAllVideoContentWithSameCategory(request.getIgnore(),request.getLimit(),category);
+    }
+
+    @PostMapping("/search/{topic}")
+    public ResponseEntity<VideoContentResponseToUser> searchVideoContentsForUsers(
+            @RequestBody GetVideoContentRequest request,
+            @PathVariable String topic
+    ){
+        return postService.searchAllVideoContentWithTopic(request.getIgnore(), request.getLimit(), topic);
     }
 
     @PostMapping("/like/video/{vcid}")
@@ -124,7 +153,7 @@ public class PostController {
     ){
         return postService.getCommendById(commentId);
     }
-    @GetMapping("/get/childComment")
+    @PostMapping("/get/childComment")
     public ResponseEntity<GetCommentsResponse> getCommentsWithSameParent(
             @RequestBody GetCommentsRequest request
     ){

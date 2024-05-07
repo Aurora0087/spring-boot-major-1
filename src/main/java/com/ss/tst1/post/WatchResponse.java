@@ -1,4 +1,4 @@
-package com.ss.tst1.order;
+package com.ss.tst1.post;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,11 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderResponse {
+public class WatchResponse {
     private String message;
-    private OrderStatus status;
+    private String videoUrl;
+
+    public WatchResponse(String message) {
+        this.message = message;
+    }
 }

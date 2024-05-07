@@ -4,6 +4,7 @@ import com.ss.tst1.aws.AmazonS3Service;
 import com.ss.tst1.likes.ContentType;
 import com.ss.tst1.likes.LikesService;
 import com.ss.tst1.post.GetVideoContentDetailsByIdResponse;
+import com.ss.tst1.profile.PostProfileResponse;
 import com.ss.tst1.user.Role;
 import com.ss.tst1.user.User;
 import com.ss.tst1.user.UserService;
@@ -131,6 +132,7 @@ public class VideoContentService {
         for (int i= ignore;i<endLine;i++){
 
             VideoContentForUser response = new VideoContentForUser();
+            PostProfileResponse profileResponse = new PostProfileResponse();
             VideoContent content = unBanedContents.get(i);
 
             response.setId(content.getId());
@@ -148,6 +150,17 @@ public class VideoContentService {
 
             response.setLikeList(likedUser);
 
+            profileResponse.setProfileId(content.getAuthor().getId());
+            profileResponse.setFirstName(content.getAuthor().getFirstName());
+            profileResponse.setLastName(content.getAuthor().getLastName());
+
+            String avatarUrl = s3Service.generatePreSignedUrl(content.getAuthor().getImageUrl(),new Date(System.currentTimeMillis()+1000*60*60*6)).toString();
+
+            profileResponse.setAvatarUrl(avatarUrl);
+            profileResponse.setUserName(content.getAuthor().getUsername());
+
+            response.setAuthor(profileResponse);
+
             responseContents.addLast(response);
         }
 
@@ -156,6 +169,101 @@ public class VideoContentService {
         return new VideoContentResponseToUser("Done",responseContents,isMoreExist);
     }
 
+    //---------------------------------------------- search
+    public VideoContentResponseToUser getUnBanedContentsWithSameCategory(Integer ignore,Integer limit,String category){
+        List<VideoContent> unBanedContents = videoContentRepo.findAllUnBanedVideoContentWithSameCategory(category);
+
+        List<VideoContentForUser> responseContents = new ArrayList<>();
+
+        int endLine = Math.min((ignore+limit),unBanedContents.size());
+
+        for (int i= ignore;i<endLine;i++){
+
+            VideoContentForUser response = new VideoContentForUser();
+            PostProfileResponse profileResponse = new PostProfileResponse();
+            VideoContent content = unBanedContents.get(i);
+
+            response.setId(content.getId());
+            response.setCategory(content.getCategory().getCategoryName());
+            response.setTitle(content.getTitle());
+            response.setPrice(content.getPrice());
+            response.setDescription(content.getDescription());
+            response.setCreatedAt(content.getCreatedAt());
+
+            String imageUrl = s3Service.generatePreSignedUrl(content.getImgUrl(),new Date(System.currentTimeMillis()+1000*60*60*6)).toString();
+
+            response.setImgUrl(imageUrl);
+
+            List<Integer> likedUser = likesService.getLikedUsersIds(content.getId(), ContentType.Video);
+
+            response.setLikeList(likedUser);
+
+            profileResponse.setProfileId(content.getAuthor().getId());
+            profileResponse.setFirstName(content.getAuthor().getFirstName());
+            profileResponse.setLastName(content.getAuthor().getLastName());
+
+            String avatarUrl = s3Service.generatePreSignedUrl(content.getAuthor().getImageUrl(),new Date(System.currentTimeMillis()+1000*60*60*6)).toString();
+
+            profileResponse.setAvatarUrl(avatarUrl);
+            profileResponse.setUserName(content.getAuthor().getUsername());
+
+            response.setAuthor(profileResponse);
+
+            responseContents.addLast(response);
+        }
+
+        Boolean isMoreExist = ignore+limit < unBanedContents.size();
+
+        return new VideoContentResponseToUser("Done",responseContents,isMoreExist);
+    }
+
+    public VideoContentResponseToUser searchAndGetUnBanedContentsWithTopic(Integer ignore,Integer limit,String topic){
+
+        List<VideoContent> unBanedContents = videoContentRepo.findAllUnBanedVideoContentWithTopic(topic);
+
+        List<VideoContentForUser> responseContents = new ArrayList<>();
+
+        int endLine = Math.min((ignore+limit),unBanedContents.size());
+
+        for (int i= ignore;i<endLine;i++){
+
+            VideoContentForUser response = new VideoContentForUser();
+            PostProfileResponse profileResponse = new PostProfileResponse();
+            VideoContent content = unBanedContents.get(i);
+
+            response.setId(content.getId());
+            response.setCategory(content.getCategory().getCategoryName());
+            response.setTitle(content.getTitle());
+            response.setPrice(content.getPrice());
+            response.setDescription(content.getDescription());
+            response.setCreatedAt(content.getCreatedAt());
+
+            String imageUrl = s3Service.generatePreSignedUrl(content.getImgUrl(),new Date(System.currentTimeMillis()+1000*60*60*6)).toString();
+
+            response.setImgUrl(imageUrl);
+
+            List<Integer> likedUser = likesService.getLikedUsersIds(content.getId(), ContentType.Video);
+
+            response.setLikeList(likedUser);
+
+            profileResponse.setProfileId(content.getAuthor().getId());
+            profileResponse.setFirstName(content.getAuthor().getFirstName());
+            profileResponse.setLastName(content.getAuthor().getLastName());
+
+            String avatarUrl = s3Service.generatePreSignedUrl(content.getAuthor().getImageUrl(),new Date(System.currentTimeMillis()+1000*60*60*6)).toString();
+
+            profileResponse.setAvatarUrl(avatarUrl);
+            profileResponse.setUserName(content.getAuthor().getUsername());
+
+            response.setAuthor(profileResponse);
+
+            responseContents.addLast(response);
+        }
+
+        Boolean isMoreExist = ignore+limit < unBanedContents.size();
+
+        return new VideoContentResponseToUser("Done",responseContents,isMoreExist);
+    }
 
     //
     public ResponseEntity<GetVideoContentDetailsByIdResponse> getVideoByIdForUser(String vId){
@@ -174,6 +282,8 @@ public class VideoContentService {
         }
 
         VideoContentForUser videoContentResponse = new VideoContentForUser();
+        PostProfileResponse profileResponse = new PostProfileResponse();
+
         videoContentResponse.setId(videoContent.get().getId());
         videoContentResponse.setImgUrl(videoContent.get().getImgUrl());
         videoContentResponse.setTitle(videoContent.get().getTitle());
@@ -184,6 +294,17 @@ public class VideoContentService {
         List<Integer> likedUser = likesService.getLikedUsersIds(videoContent.get().getId(), ContentType.Video);
 
         videoContentResponse.setLikeList(likedUser);
+
+        profileResponse.setProfileId(videoContent.get().getAuthor().getId());
+        profileResponse.setFirstName(videoContent.get().getAuthor().getFirstName());
+        profileResponse.setLastName(videoContent.get().getAuthor().getLastName());
+
+        String avatarUrl = s3Service.generatePreSignedUrl(videoContent.get().getAuthor().getImageUrl(),new Date(System.currentTimeMillis()+1000*60*60*6)).toString();
+
+        profileResponse.setAvatarUrl(avatarUrl);
+        profileResponse.setUserName(videoContent.get().getAuthor().getUsername());
+
+        videoContentResponse.setAuthor(profileResponse);
 
         return ResponseEntity.ok(new GetVideoContentDetailsByIdResponse("Done",videoContentResponse));
     }

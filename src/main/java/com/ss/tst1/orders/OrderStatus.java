@@ -1,4 +1,4 @@
-package com.ss.tst1.order;
+package com.ss.tst1.orders;
 
 public enum OrderStatus {
     success,

@@ -1,6 +1,7 @@
 package com.ss.tst1.videoContent;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.ss.tst1.profile.PostProfileResponse;
 import lombok.*;
 
 import java.util.Date;
@@ -26,4 +27,6 @@ public class VideoContentForUser {
     private Date createdAt;
     @JsonProperty("likeList")
     private List<Integer> likeList;
+
+    private PostProfileResponse author;
 }
