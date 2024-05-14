@@ -35,7 +35,6 @@ public class User implements UserDetails {
     @Column(nullable = false,unique = true,updatable = false)
     private String email;
     @Column(nullable = false,unique = true)
-    private String userName;
     private String password;
     private String firstName;
     private String lastName;
@@ -51,14 +50,13 @@ public class User implements UserDetails {
     private Role role;
 
     //appUser constructor without id
-    public User(String firstName, String lastName, String email,String userName, String password,Role role) {
+    public User(String firstName, String lastName, String email, String password,Role role) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.userName=userName;
         this.password = password;
         this.bio="";
-        this.imageUrl="defImage.jpg";
+        this.imageUrl="avatar/defImage.jpg";
         this.bgImage="";
         this.role = role;
         this.locked = false;

@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -39,11 +41,13 @@ public class Orders {
     private String razorpayOrderId;
     private String razorpayPaymentId;
     private Boolean isPayed;
+    private Date orderedAt;
 
     public Orders(User boughtBy, VideoContent content, String razorpayOrderId) {
         this.boughtBy = boughtBy;
         this.content = content;
         this.razorpayOrderId = razorpayOrderId;
         this.isPayed = false;
+        this.orderedAt = new Date();
     }
 }

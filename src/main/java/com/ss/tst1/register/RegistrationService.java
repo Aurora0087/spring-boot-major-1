@@ -33,7 +33,6 @@ public class RegistrationService {
                             request.getFirstName(),
                             request.getLastName(),
                             request.getEmail(),
-                            request.getUserName(),
                             request.getPassword(),
                             Role.ADMIN)
             );
@@ -44,7 +43,6 @@ public class RegistrationService {
                             request.getFirstName(),
                             request.getLastName(),
                             request.getEmail(),
-                            request.getUserName(),
                             request.getPassword(),
                             Role.USER)
             );

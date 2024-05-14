@@ -34,7 +34,7 @@ public class JwtAuthFillter extends OncePerRequestFilter {
 
         Cookie[] cookies = request.getCookies();
 
-        if (!Objects.equals(request.getServletPath(), "/register") && !Objects.equals(request.getServletPath(), "/login")){
+        if (!Objects.equals(request.getServletPath(), "/register") && !Objects.equals(request.getServletPath(), "/login") && !Objects.equals(request.getServletPath(), "/login")){
 
             if (cookies!=null){
                 for (Cookie cookie:cookies){

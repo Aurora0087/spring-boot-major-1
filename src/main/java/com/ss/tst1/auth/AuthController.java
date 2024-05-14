@@ -6,20 +6,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@AllArgsConstructor
 @CrossOrigin(origins = "http://localhost:3000")
 public class AuthController {
 
     @Autowired
     private AuthService authService;
 
-    @PostMapping(path = "/login")
+    @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticateUser(
             @RequestBody LoginRequest request
     ){
         return authService.signIn(request);
     }
-    @GetMapping(path = "/logout")
+
+    @GetMapping("/log-out")
     public ResponseEntity<String> logout(){
         return authService.deleteUserCookies();
     }

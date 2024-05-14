@@ -285,11 +285,15 @@ public class VideoContentService {
         PostProfileResponse profileResponse = new PostProfileResponse();
 
         videoContentResponse.setId(videoContent.get().getId());
-        videoContentResponse.setImgUrl(videoContent.get().getImgUrl());
         videoContentResponse.setTitle(videoContent.get().getTitle());
         videoContentResponse.setDescription(videoContent.get().getDescription());
         videoContentResponse.setCreatedAt(videoContent.get().getCreatedAt());
+        videoContentResponse.setPrice(videoContent.get().getPrice());
         videoContentResponse.setCategory(videoContent.get().getCategory().getCategoryName());
+
+        String imageUrl = s3Service.generatePreSignedUrl(videoContent.get().getImgUrl(),new Date(System.currentTimeMillis()+1000*60*60*6)).toString();
+
+        videoContentResponse.setImgUrl(imageUrl);
 
         List<Integer> likedUser = likesService.getLikedUsersIds(videoContent.get().getId(), ContentType.Video);
 

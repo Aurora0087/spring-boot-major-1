@@ -90,7 +90,7 @@ public class AuthService {
         String email = jwtService.extractUsername(token);
         User user = userService.getUserByEmailId(email).orElseThrow(()-> new IllegalArgumentException("User do not exist."));
 
-        URL avatarUrl = s3Service.generatePreSignedUrl("avatar/"+user.getImageUrl(),new Date(System.currentTimeMillis()+1000*60*60*6));
+        URL avatarUrl = s3Service.generatePreSignedUrl(user.getImageUrl(),new Date(System.currentTimeMillis()+1000*60*60*6));
 
         return ResponseEntity.ok(new AuthUserResponse(avatarUrl.toString(),user.getId().toString()));
     }

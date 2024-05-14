@@ -44,9 +44,10 @@ public class WebSecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/error*/**",
-                                "/login/**",
-                                "/logout/**",
+                                "/login*/**",
+                                "/logout*/**",
                                 "/register*/**",
+                                "/webhook*/**",
                                 "/get/videocontent*/**"
                         )
                         .permitAll()
