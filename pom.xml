@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.ss</groupId>
-	<artifactId>tst1</artifactId>
+	<artifactId>IDK</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>tst1</name>
+	<name>IDK</name>
 	<description>none</description>
 	<properties>
 		<java.version>21</java.version>

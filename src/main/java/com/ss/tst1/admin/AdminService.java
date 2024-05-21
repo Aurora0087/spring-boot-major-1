@@ -54,7 +54,7 @@ public class AdminService {
             {
                 User responseUser = allUser.get(i);
 
-                responseUsersList.addLast(
+                responseUsersList.add(
                         new UserDetails(
                                 responseUser.getId().toString(),
                                 responseUser.getUsername(),
@@ -95,15 +95,17 @@ public class AdminService {
                             .body(new UserDetailsResponse("You can not update your own Permissions."));
                 }
 
-                if (Objects.equals(user.get().getEmail(), "debrajbanshi1@gmail.com")){
-
-                    return ResponseEntity
-                            .status(HttpStatus.FORBIDDEN)
-                            .body(new UserDetailsResponse("You can not update this account's Permissions."));
-                }
-
                 if (userPermissions.getId().matches(".*\\d.*"))
                 {
+                    Optional<User> changedProfile = userService.getUserById(Integer.valueOf(userPermissions.getId()));
+
+                    if (changedProfile.isEmpty()) continue;
+
+                    if (Objects.equals(changedProfile.get().getUsername(), "debrajbanshi1@gmail.com")){
+                        return ResponseEntity
+                                .status(HttpStatus.FORBIDDEN)
+                                .body(new UserDetailsResponse("You can not update user id "+userPermissions.getId()));
+                    }
                     Role updatedRole = userPermissions.getRole().equals("ADMIN") ? Role.ADMIN : Role.USER;
 
                     userService.updateUsersPermissions(Integer.valueOf(userPermissions.getId()), userPermissions.getLocked(), userPermissions.getEnabled(),updatedRole);
@@ -111,7 +113,7 @@ public class AdminService {
 
             }
 
-            return getAllUser(uid,token,"0","10");
+            return getAllUser(uid,token,"0","5");
         }
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)

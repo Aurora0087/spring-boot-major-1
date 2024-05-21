@@ -28,5 +28,7 @@ public class VideoContentForUser {
     @JsonProperty("likeList")
     private List<Integer> likeList;
 
+    private Boolean isLiked;
+
     private PostProfileResponse author;
 }

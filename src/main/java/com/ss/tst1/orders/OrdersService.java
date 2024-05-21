@@ -14,12 +14,15 @@ import com.ss.tst1.videoContent.VideoContent;
 import com.ss.tst1.videoContent.VideoContentService;
 import lombok.AllArgsConstructor;
 import org.apache.commons.codec.binary.Hex;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -48,6 +51,18 @@ public class OrdersService {
 
     public Boolean isBought(Integer uid,Integer contentId){
         return ordersRepo.findByUidAndContentId(uid,contentId).isPresent();
+    }
+
+    public Orders saveOrder(User user,VideoContent content,String razorPayOrderId){
+        return ordersRepo.save(new Orders(user,content,razorPayOrderId));
+    }
+
+    public Orders saveOrder(Orders order){
+        return ordersRepo.save(order);
+    }
+
+    public Optional<Orders> findOrderById(Integer orderId){
+        return ordersRepo.findById(orderId);
     }
 
     public ResponseEntity<OrderResponse> makeOrder(String uid, String contentId) throws RazorpayException {
@@ -111,14 +126,14 @@ public class OrdersService {
                 }
             }
 
-            Optional<Orders> order = ordersRepo.findByRazorpayOrderId(orderId);
+            List<Orders> ordersList = ordersRepo.findByRazorpayOrderId(orderId);
 
-            if (order.isPresent()){
-                order.get().setIsPayed(true);
-                order.get().setRazorpayPaymentId(paymentId);
-                ordersRepo.save(order.get());
-            }
-            System.out.println("working");
+                for (Orders order:ordersList){
+                    order.setIsPayed(true);
+                    order.setRazorpayPaymentId(paymentId);
+                    ordersRepo.save(order);
+                }
+
             return ResponseEntity.ok("ok");
         }
 
@@ -126,6 +141,7 @@ public class OrdersService {
     }
 
     public ResponseEntity<?> findAllSuccessPayment(String userId,String token){
+
         if (!userId.matches(".*\\d.*")){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Parameter not given properly.");
         }
@@ -134,7 +150,23 @@ public class OrdersService {
         Optional<User> currentUser = userService.getUserByEmailId(userEmail);
 
         if (currentUser.get().getRole().toString().equalsIgnoreCase(Role.ADMIN.toString()) || Integer.valueOf(userId).equals(currentUser.get().getId())){
-            return ResponseEntity.ok(ordersRepo.findAllBoughtByUser(Integer.valueOf(userId)));
+
+            List<Orders> orders = ordersRepo.findAllBoughtByUser(Integer.valueOf(userId));
+
+            List<SuccessPaymentResponse> contents = new ArrayList<>();
+
+            for (Orders order :orders){
+
+                SuccessPaymentResponse response = new SuccessPaymentResponse();
+                response.setContentId(order.getContent().getId());
+                response.setCreatedAt(order.getOrderedAt());
+                response.setPaymentId(order.getRazorpayPaymentId());
+                response.setOrderId(order.getId());
+
+                contents.add(response);
+            }
+
+            return ResponseEntity.ok(contents);
         }
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You don't have Authority.");

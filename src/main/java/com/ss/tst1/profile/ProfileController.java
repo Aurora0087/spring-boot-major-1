@@ -40,4 +40,12 @@ public class ProfileController {
     ) throws IOException {
         return profileService.updateProfileImages(bgImage,avatar,uid,token);
     }
+
+    @PostMapping("/profile/edit/password")
+    public ResponseEntity<?> changePassword(
+            @RequestBody UpdatePasswordRequest request,
+            @CookieValue(name = "token")String token
+    ){
+        return profileService.updatePassword(request.getOldPassword(),request.getNewPassword(),request.getConfirmNewPassword(),token);
+    }
 }

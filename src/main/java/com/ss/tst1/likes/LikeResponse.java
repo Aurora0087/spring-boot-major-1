@@ -12,7 +12,6 @@ import java.util.List;
 public class LikeResponse {
     private String message;
     private List<Integer> likeList;
-
     public LikeResponse(String message) {
         this.message = message;
         this.likeList = new ArrayList<>();

@@ -24,6 +24,7 @@ public class RazorPayment {
         orderRequest.put("amount",amount*100);
         orderRequest.put("currency","INR");
         orderRequest.put("receipt", "receipt#1");
+
         JSONObject notes = new JSONObject();
         notes.put("notes_key_1",note);
         orderRequest.put("notes",notes);

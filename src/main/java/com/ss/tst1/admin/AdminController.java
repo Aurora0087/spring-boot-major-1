@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/admin/v1")
+@RequestMapping("/admin")
 public class AdminController {
 
 
@@ -13,7 +13,7 @@ public class AdminController {
     private AdminService adminService;
 
 
-    @GetMapping("/getusers")
+    @PostMapping("/getusers")
     public ResponseEntity<UserDetailsResponse> getUsers(
             @CookieValue(name = "uuid")String uid,
             @CookieValue(name = "token")String token,
@@ -22,7 +22,7 @@ public class AdminController {
         return adminService.getAllUser(uid, token,request.getIgnore(), request.getLimit());
     }
 
-    @PostMapping("/update/userspermissions")
+    @PostMapping("/update/usersPermissions")
     public ResponseEntity<UserDetailsResponse> editUsers(
             @CookieValue(name = "uuid")String uid,
             @CookieValue(name = "token")String token,

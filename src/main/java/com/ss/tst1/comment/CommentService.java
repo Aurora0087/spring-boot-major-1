@@ -1,14 +1,19 @@
 package com.ss.tst1.comment;
 
+import com.ss.tst1.aws.AmazonS3Service;
+import com.ss.tst1.jwt.JwtService;
 import com.ss.tst1.likes.ContentType;
+import com.ss.tst1.likes.Likes;
 import com.ss.tst1.likes.LikesService;
 import com.ss.tst1.profile.PostProfileResponse;
 import com.ss.tst1.user.User;
+import com.ss.tst1.user.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +26,15 @@ public class CommentService {
 
     @Autowired
     private LikesService likesService;
+
+    @Autowired
+    private AmazonS3Service s3Service;
+
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private UserService userService;
 
 
     public Optional<Comment> getComment(Integer commentId) {
@@ -35,7 +49,11 @@ public class CommentService {
         return comment.getId();
     }
 
-    public List<CommentResponse> getCommentFromSemeParent(Integer parentId,CommentParentType parentType){
+    public List<CommentResponse> getCommentFromSemeParent(Integer parentId,CommentParentType parentType,String token){
+
+        String email = jwtService.extractUsername(token);
+
+        Optional<User> currentUser = userService.getUserByEmailId(email);
 
         List<Comment> commentsWithSameParent =  commentRepo.commentsWithSameParent(parentId,parentType);
 
@@ -51,10 +69,21 @@ public class CommentService {
             if (!comment.getIsPrivate()){
                 response.setText(comment.getText());
 
+                ContentType contentType = parentType == CommentParentType.VIDEO ? ContentType.Video : ContentType.Comment;
+
+                List<Integer> likedUserIds =  likesService.getLikedUsersIds(comment.getId(),contentType);
+                int likeCount = likedUserIds.size();
+
+                response.setLikeCount(likeCount);
+                response.setIsLiked(likedUserIds.contains(currentUser.get().getId()));
+
                 PostProfileResponse profile = new PostProfileResponse();
 
                 profile.setProfileId(comment.getAuthor().getId());
-                profile.setAvatarUrl(comment.getAuthor().getImageUrl());
+
+                String avatarUrl = s3Service.generatePreSignedUrl(comment.getAuthor().getImageUrl(),new Date(System.currentTimeMillis()+1000*60*60*6)).toString();
+
+                profile.setAvatarUrl(avatarUrl);
                 profile.setUserName(comment.getAuthor().getUsername());
                 profile.setFirstName(comment.getAuthor().getFirstName());
                 profile.setLastName(comment.getAuthor().getLastName());
@@ -62,27 +91,27 @@ public class CommentService {
                 response.setAuthor(profile);
             }
 
-            commentResponseList.addLast(response);
+            commentResponseList.add(response);
         }
         return commentResponseList;
     }
 
     public Integer updateComment(Integer commentId,String text){
-        Comment updatedComment = commentRepo.updateComment(commentId,text);
+        commentRepo.updateComment(commentId,text);
 
-        return updatedComment.getId();
+        return commentId;
     }
 
     public Integer makeCommentPrivate(Integer commentId){
-        Comment comment = commentRepo.privateComment(commentId,true);
+        commentRepo.privateComment(commentId,true);
 
-        return comment.getId();
+        return commentId;
     }
 
     public Integer makeCommentPublic(Integer commentId){
-        Comment comment = commentRepo.privateComment(commentId,false);
+        commentRepo.privateComment(commentId,false);
 
-        return comment.getId();
+        return commentId;
     }
 
     public void deleteCommentAndChildesPermanently(Integer commentId){

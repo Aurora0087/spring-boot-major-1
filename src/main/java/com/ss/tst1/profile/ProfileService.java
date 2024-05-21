@@ -10,11 +10,13 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -32,6 +34,9 @@ public class ProfileService {
 
     @Autowired
     private JwtService jwtService;
+
+    @Autowired
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public ResponseEntity<ProfileInformationResponse> getProfileInformation(String userId,String token){
 
@@ -109,7 +114,11 @@ public class ProfileService {
 
             if (!avatar.isEmpty()){
 
-                if (user.get().getImageUrl() != "avatar/defImage.jpg"){
+                if (!Objects.requireNonNull(avatar.getContentType()).contains("image")){
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("avatar must be a Image file.");
+                }
+
+                if (!Objects.equals(user.get().getImageUrl(), "avatar/defImage.jpg")){
                     s3Service.deleteFile(user.get().getImageUrl());
                 }
                 String newAvatarUrl = s3Service.uploadFile(avatar,"avatar");
@@ -118,11 +127,16 @@ public class ProfileService {
 
             if (!bgImage.isEmpty()){
 
-                if (user.get().getBgImage() != ""){
+                if (!Objects.requireNonNull(bgImage.getContentType()).contains("image")){
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("bgImage Image must be a Image file.");
+                }
+
+                if (!Objects.equals(user.get().getBgImage(), "")){
                     s3Service.deleteFile(user.get().getBgImage());
                 }
+
                 String newBgImageUrl = s3Service.uploadFile(bgImage,"bgImage");
-                user.get().setImageUrl(newBgImageUrl);
+                user.get().setBgImage(newBgImageUrl);
             }
 
             userRepository.save(user.get());
@@ -131,5 +145,28 @@ public class ProfileService {
         }
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You don't have Authority.");
+    }
+
+    public ResponseEntity<?> updatePassword(String oldPassword, String newPassword, String confirmNewPassword, String token) {
+
+        Optional<User> user = userService.getUserByEmailId(jwtService.extractUsername(token));
+
+        if (Objects.equals(oldPassword, newPassword)){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("New password can not old password.");
+        }
+        if (!Objects.equals(newPassword, confirmNewPassword)){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("new password and confirm password must me same.");
+        }
+
+        if (bCryptPasswordEncoder.matches(oldPassword,user.get().getPassword())){
+
+            String newEncryptedPassword = bCryptPasswordEncoder.encode(newPassword);
+
+            user.get().setPassword(newEncryptedPassword);
+            userRepository.save(user.get());
+
+            return ResponseEntity.ok("Done.");
+        }
+        else return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Old password is not same.");
     }
 }

@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
@@ -19,4 +20,10 @@ public class VideoContentResponseToUser {
     private List<VideoContentForUser> videoContents;
     @JsonProperty("isMore")
     private Boolean isMore;
+
+    public VideoContentResponseToUser(String message) {
+        this.message = message;
+        this.videoContents = new ArrayList<>();
+        this.isMore = false;
+    }
 }

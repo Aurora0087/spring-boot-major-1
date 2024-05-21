@@ -70,10 +70,28 @@ public class PostController {
 
     @GetMapping("/get/videocontent/{vcid}")
     public ResponseEntity<GetVideoContentDetailsByIdResponse> getVideoContentForUsers(
-            @PathVariable String vcid
+            @PathVariable String vcid,
+            @CookieValue(name = "token")String token
     ){
-        return postService.getVideoById(vcid);
+        return postService.getVideoById(vcid,token);
     }
+
+    @PostMapping("/get/uploaded/contents")
+    public ResponseEntity<VideoContentResponseToUser> findAllContentUploadedByUser(
+            @CookieValue(name = "token")String token,
+            @RequestBody GetVideoContentRequest request
+    ){
+        return postService.findAllContentUploadedByUser(request.getIgnore(),request.getLimit(),token);
+    }
+
+    @PostMapping("/get/uploaded/contents/{uid}")
+    public ResponseEntity<VideoContentResponseToUser> findAllContentUploadedByUserId(
+            @PathVariable String uid,
+            @RequestBody GetVideoContentRequest request
+    ){
+        return postService.findAllContentUploadedByUserId(request.getIgnore(),request.getLimit(),uid);
+    }
+
 
     @PostMapping("/watch/{vcid}")
     public ResponseEntity<WatchResponse> watchVideoContent(
@@ -108,7 +126,7 @@ public class PostController {
     }
 
     @PostMapping("/add/comment")
-    public ResponseEntity<String> addComment(
+    public ResponseEntity<AddCommentResponse> addComment(
             @CookieValue(name = "uuid")String uid,
             @RequestBody CreateCommentRequest request
     ){
@@ -149,14 +167,16 @@ public class PostController {
 
     @GetMapping("/get/comment/{commentId}")
     public ResponseEntity<CommentResponse> getCommentById(
+            @CookieValue(name = "token")String token,
             @PathVariable String commentId
     ){
-        return postService.getCommendById(commentId);
+        return postService.getCommendById(commentId,token);
     }
     @PostMapping("/get/childComment")
     public ResponseEntity<GetCommentsResponse> getCommentsWithSameParent(
+            @CookieValue(name = "token")String token,
             @RequestBody GetCommentsRequest request
     ){
-        return postService.getComments(request.getParentId(), request.getParentType(), request.getIgnore(), request.getLimit());
+        return postService.getComments(request.getParentId(), request.getParentType(), request.getIgnore(), request.getLimit(),token);
     }
 }

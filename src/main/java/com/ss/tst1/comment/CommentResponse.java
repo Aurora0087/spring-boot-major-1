@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.List;
+
 @Setter
 @Getter
 @AllArgsConstructor
@@ -17,6 +19,9 @@ public class CommentResponse {
     private Integer commentId;
     private String text;
     private PostProfileResponse author;
+    private Integer likeCount;
+    private Boolean isLiked;
+    private Integer commentCount;
 
     public CommentResponse(String message) {
         this.message = message;

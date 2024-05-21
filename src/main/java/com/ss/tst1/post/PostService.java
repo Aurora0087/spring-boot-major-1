@@ -5,7 +5,10 @@ import com.ss.tst1.comment.Comment;
 import com.ss.tst1.comment.CommentParentType;
 import com.ss.tst1.comment.CommentResponse;
 import com.ss.tst1.comment.CommentService;
+import com.ss.tst1.jwt.JwtService;
+import com.ss.tst1.likes.ContentType;
 import com.ss.tst1.likes.LikeResponse;
+import com.ss.tst1.likes.LikesService;
 import com.ss.tst1.orders.OrderResponse;
 import com.ss.tst1.orders.OrderStatus;
 import com.ss.tst1.orders.Orders;
@@ -50,6 +53,12 @@ public class PostService {
     @Autowired
     private OrdersService ordersService;
 
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private LikesService likesService;
+
 
     //------------------------------------category
     public ResponseEntity<String> createNewCategory(String name){
@@ -87,12 +96,20 @@ public class PostService {
         }
 
         try {
+
+            if (!Objects.requireNonNull(thumbnail.getContentType()).contains("image")){
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new CreateVideoContentResponse("thumbnail must be a image file."));
+            }
+            if (!Objects.requireNonNull(video.getContentType()).contains("video")){
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new CreateVideoContentResponse("video must be a Video file."));
+            }
+
             String thumbnailName = s3Service.uploadFile(thumbnail,"images");
             String videoName = s3Service.uploadFile(video,"videos");
-            Float contentPrice = 0F;
+            float contentPrice = 0F;
 
             if (price.matches(".*\\d.*")){
-                contentPrice = Float.valueOf(price);
+                contentPrice = Float.parseFloat(price);
             }
 
             return videoContentService.createVideoContent(Integer.valueOf(uid),Integer.valueOf(categoryID),title,description,contentPrice,thumbnailName,videoName);
@@ -147,8 +164,8 @@ public class PostService {
         return ResponseEntity.ok(videoContentService.getUnBanedContents(Integer.valueOf(ignore),Integer.valueOf(limit)));
     }
 
-    public ResponseEntity<GetVideoContentDetailsByIdResponse> getVideoById(String vId){
-        return videoContentService.getVideoByIdForUser(vId);
+    public ResponseEntity<GetVideoContentDetailsByIdResponse> getVideoById(String vId,String token){
+        return videoContentService.getVideoByIdForUser(vId,token);
     }
 
 
@@ -199,7 +216,7 @@ public class PostService {
         List<Integer> likeList = new ArrayList<>();
 
         if (videoContent.isEmpty()){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LikeResponse("Video content do not exist.",likeList));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new LikeResponse("Video content do not exist."));
         }
 
 
@@ -220,10 +237,10 @@ public class PostService {
     //------------------------------------------------- comment
 
 
-    public ResponseEntity<String> createComment(String parentId,String uid,String text,String parentType){
+    public ResponseEntity<AddCommentResponse> createComment(String parentId,String uid,String text,String parentType){
 
         if (!parentId.matches(".*\\d.*") || !uid.matches(".*\\d.*")){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Parameters not given properly.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new AddCommentResponse("Parameters not given properly."));
         }
 
         User user = userService.getUserById(Integer.valueOf(uid)).orElseThrow(()->new UsernameNotFoundException("User do not exist, try to log in again."));
@@ -235,7 +252,7 @@ public class PostService {
             Optional<VideoContent> videoContent = videoContentService.getVideoContent(Integer.valueOf(parentId));
 
             if (videoContent.isEmpty()){
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Video content do not exist.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new AddCommentResponse("Video content do not exist."));
             }
 
         }
@@ -244,16 +261,16 @@ public class PostService {
             Optional<Comment> comment = commentService.getComment(Integer.valueOf(parentId));
 
             if (comment.isEmpty()){
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Video content do not exist.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new AddCommentResponse("Comment content do not exist."));
             }
             commentParentType = CommentParentType.COMMENT;
         }
 
-        else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Proper parentType not given");
+        else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new AddCommentResponse("Proper parentType not given"));
 
         Integer newCommentId =  commentService.createComment(Integer.valueOf(parentId),text,user,commentParentType);
 
-        return ResponseEntity.ok(newCommentId.toString());
+        return ResponseEntity.ok(new AddCommentResponse("Done",newCommentId));
     }
 
 
@@ -323,7 +340,11 @@ public class PostService {
         return ResponseEntity.ok(true);
     }
 
-    public ResponseEntity<CommentResponse> getCommendById(String commentId){
+    public ResponseEntity<CommentResponse> getCommendById(String commentId,String token){
+
+        String email = jwtService.extractUsername(token);
+
+        Optional<User> currentUser = userService.getUserByEmailId(email);
 
         if (!commentId.matches(".*\\d.*")){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CommentResponse("Comment id not given properly."));
@@ -342,10 +363,18 @@ public class PostService {
 
             response.setText(comment.get().getText());
 
+            List<Integer> likedUserIds =  likesService.getLikedUsersIds(comment.get().getId(), ContentType.Comment);
+            int likeCount = likedUserIds.size();
+
+            response.setLikeCount(likeCount);
+            response.setIsLiked(likedUserIds.contains(currentUser.get().getId()));
+
             PostProfileResponse profile = new PostProfileResponse();
 
             profile.setProfileId(comment.get().getAuthor().getId());
-            profile.setAvatarUrl(comment.get().getAuthor().getImageUrl());
+
+            String avatarUrl = s3Service.generatePreSignedUrl(comment.get().getAuthor().getImageUrl(),new Date(System.currentTimeMillis()+1000*60*60*6)).toString();
+            profile.setAvatarUrl(avatarUrl);
             profile.setUserName(comment.get().getAuthor().getUsername());
             profile.setFirstName(comment.get().getAuthor().getFirstName());
             profile.setLastName(comment.get().getAuthor().getLastName());
@@ -357,7 +386,7 @@ public class PostService {
         return ResponseEntity.ok(response);
     }
 
-    public ResponseEntity<GetCommentsResponse> getComments(String parentId,String parentType,String ignore,String limit){
+    public ResponseEntity<GetCommentsResponse> getComments(String parentId,String parentType,String ignore,String limit,String token){
 
         int ignoreNumber = (ignore.matches(".*\\d.*") && Integer.parseInt(ignore) > 0) ? Integer.parseInt(ignore) : 0;
         int limitNumber = (limit.matches(".*\\d.*") && Integer.parseInt(ignore) > 0) ? Integer.parseInt(limit) : 5;
@@ -373,7 +402,7 @@ public class PostService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GetCommentsResponse("Video do not exist."));
             }
 
-            List<CommentResponse> commentList = commentService.getCommentFromSemeParent(videoContent.get().getId(),CommentParentType.VIDEO);
+            List<CommentResponse> commentList = commentService.getCommentFromSemeParent(videoContent.get().getId(),CommentParentType.VIDEO,token);
 
             Boolean isMore = commentList.size()>( ignoreNumber + limitNumber );
 
@@ -390,7 +419,7 @@ public class PostService {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GetCommentsResponse("Comment do not exist."));
             }
 
-            List<CommentResponse> commentList = commentService.getCommentFromSemeParent(comment.get().getId(),CommentParentType.COMMENT);
+            List<CommentResponse> commentList = commentService.getCommentFromSemeParent(comment.get().getId(),CommentParentType.COMMENT,token);
 
             Boolean isMore = commentList.size()>( ignoreNumber + limitNumber );
 
@@ -448,5 +477,35 @@ public class PostService {
         }
 
         return ResponseEntity.ok(videoContentService.searchAndGetUnBanedContentsWithTopic(Integer.valueOf(ignore),Integer.valueOf(limit),topic.trim()));
+    }
+
+    public ResponseEntity<VideoContentResponseToUser> findAllContentUploadedByUser(String ignore, String limit, String token) {
+
+        if (ignore.isEmpty() || !ignore.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new VideoContentResponseToUser("Ignore Dose not hold any number.",new ArrayList<>(),false));
+        }
+
+        if (limit.isEmpty() || !limit.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new VideoContentResponseToUser("Limit Dose not hold any number.",new ArrayList<>(),false));
+        }
+
+        return videoContentService.findAllContentUploadedByUser(Integer.valueOf(ignore),Integer.valueOf(limit),token);
+    }
+
+    public ResponseEntity<VideoContentResponseToUser> findAllContentUploadedByUserId(String ignore,String limit,String uid){
+
+        if (ignore.isEmpty() || !ignore.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new VideoContentResponseToUser("Ignore Dose not hold any number."));
+        }
+
+        if (limit.isEmpty() || !limit.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new VideoContentResponseToUser("Limit Dose not hold any number."));
+        }
+
+        if (uid.isEmpty() || !uid.matches(".*\\d.*")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new VideoContentResponseToUser("uid Dose not hold any number."));
+        }
+
+        return videoContentService.findAllContentUploadedByUserId(Integer.valueOf(ignore),Integer.valueOf(limit),Integer.valueOf(uid));
     }
 }

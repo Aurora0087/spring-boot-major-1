@@ -22,11 +22,17 @@ public interface VideoContentRepo extends JpaRepository<VideoContent,Integer> {
     @Query("SELECT vc FROM VideoContent vc WHERE vc.isBlocked = false AND vc.category.categoryName = :category")
     List<VideoContent> findAllUnBanedVideoContentWithSameCategory(String category);
 
+    @Query("SELECT vc FROM VideoContent vc WHERE vc.author.id = :userId")
+    List<VideoContent> findAllByUserId(Integer userId);
+
+    @Query("SELECT vc FROM VideoContent vc WHERE vc.isBlocked = false AND vc.author.id = :userId")
+    List<VideoContent> findAllUnBanedContentByUserId(Integer userId);
+
     @Query("SELECT vc FROM VideoContent vc WHERE vc.isBlocked = false AND (vc.title LIKE %:topic% OR vc.category.categoryName LIKE %:topic%)")
     List<VideoContent> findAllUnBanedVideoContentWithTopic(String topic);
 
     @Transactional
     @Modifying
     @Query("UPDATE VideoContent vc SET vc.title = :title, vc.description = :description, vc.price = :price WHERE vc.id = :contentId")
-    VideoContent updateContent(Integer contentId,String title,String description,Float price);
+    void updateContent(Integer contentId,String title,String description,Float price);
 }

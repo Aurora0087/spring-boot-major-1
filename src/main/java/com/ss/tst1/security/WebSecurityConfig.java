@@ -36,7 +36,6 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
 
-        System.out.println(new Date());
          http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
@@ -46,12 +45,13 @@ public class WebSecurityConfig {
                                 "/error*/**",
                                 "/login*/**",
                                 "/logout*/**",
+                                "/auth*/**",
                                 "/register*/**",
                                 "/webhook*/**",
                                 "/get/videocontent*/**"
                         )
                         .permitAll()
-                        .requestMatchers("/lol*/**")
+                        .requestMatchers("/user*/**")
                         .hasAuthority("USER")
                         .requestMatchers("/admin*/**")
                         .hasAuthority("ADMIN")

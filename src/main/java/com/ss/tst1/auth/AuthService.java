@@ -41,6 +41,15 @@ public class AuthService {
         String email = request.getEmail();
         String password = request.getPassword();
 
+        Optional<User> user = userService.getUserByEmailId(email);
+
+        if (user.isEmpty()){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new AuthenticationResponse("Wrong user name or password."));
+        }
+        if (user.get().getLocked()){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new AuthenticationResponse("User is blocked."));
+        }
+
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                        email,
@@ -50,12 +59,6 @@ public class AuthService {
         if (authentication.isAuthenticated()){
 
             String generatedToken = jwtService.generateToken(email);
-
-            Optional<User> user = userService.getUserByEmailId(email);
-
-            if (user.isEmpty()){
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AuthenticationResponse("Failed, no user found with this credential."));
-            }
 
             ResponseCookie token = ResponseCookie.from("token",generatedToken)
                     .httpOnly(true)
@@ -87,12 +90,18 @@ public class AuthService {
     }
 
     public ResponseEntity<AuthUserResponse> authenticateUser(String token){
+
+        if(token.isEmpty())return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+
         String email = jwtService.extractUsername(token);
-        User user = userService.getUserByEmailId(email).orElseThrow(()-> new IllegalArgumentException("User do not exist."));
 
-        URL avatarUrl = s3Service.generatePreSignedUrl(user.getImageUrl(),new Date(System.currentTimeMillis()+1000*60*60*6));
+        Optional<User> user = userService.getUserByEmailId(email);
 
-        return ResponseEntity.ok(new AuthUserResponse(avatarUrl.toString(),user.getId().toString()));
+        if (user.isEmpty())return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+
+        URL avatarUrl = s3Service.generatePreSignedUrl(user.get().getImageUrl(),new Date(System.currentTimeMillis()+1000*60*60*6));
+
+        return ResponseEntity.ok(new AuthUserResponse(avatarUrl.toString(),user.get().getId().toString()));
     }
 
     public ResponseEntity<String> deleteUserCookies(){

@@ -11,4 +11,8 @@ import lombok.Setter;
 public class CreateVideoContentResponse {
     private String message;
     private Integer contentId;
+
+    public CreateVideoContentResponse(String message) {
+        this.message = message;
+    }
 }

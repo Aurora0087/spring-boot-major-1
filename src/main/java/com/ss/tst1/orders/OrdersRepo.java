@@ -15,7 +15,7 @@ public interface OrdersRepo extends JpaRepository<Orders,Integer> {
     Optional<Orders> findByUidAndContentId(Integer userId, Integer contentId);
 
     @Query("SELECT o FROM Orders o WHERE o.razorpayOrderId = :id")
-    Optional<Orders> findByRazorpayOrderId(String id);
+    List<Orders> findByRazorpayOrderId(String id);
 
     @Query("SELECT o FROM Orders o WHERE o.boughtBy.id = :userId AND o.isPayed = true")
     List<Orders> findAllBoughtByUser(Integer userId);
