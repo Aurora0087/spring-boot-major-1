@@ -54,7 +54,7 @@ amazon.s3.accessKey = *********
 amazon.s3.secretKey = *********
 
 
-#                           File request and resp[one size
+#                           File request and response size
 spring.servlet.multipart.max-file-size=100MB
 spring.servlet.multipart.max-request-size=100MB
 
