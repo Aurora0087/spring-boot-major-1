@@ -71,9 +71,7 @@ Once you've set up the `application.properties` file, you can save it. This file
 
 ---
 
-# API Endpoints
-
-This is a Spring Boot application that provides various API endpoints for user authentication, video content management, and category management.
+# API Endpoints and Webhooks
 
 ## Table of Contents
 
