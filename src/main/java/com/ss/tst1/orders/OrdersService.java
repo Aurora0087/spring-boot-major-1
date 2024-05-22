@@ -32,6 +32,9 @@ public class OrdersService {
     @Value("${razorpay.key.id}")
     private String keyId;
 
+    @Value(("${razorpay.webhook.secret}"))
+    private String WEBHOOK_SECRET;
+
     @Autowired
     private OrdersRepo ordersRepo;
 
@@ -43,8 +46,6 @@ public class OrdersService {
 
     @Autowired
     private JwtService jwtService;
-
-    private static final String WEBHOOK_SECRET = "aurora";
 
     @Autowired
     private RazorPayment razorPayment;
